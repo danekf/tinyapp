@@ -3,6 +3,16 @@ const app = express();
 const PORT = 8080; // default port 8080
 app.set("view engine", "ejs") // set template enmjine as ejs
 
+function generateRandomString() {
+  let randomString = '';
+  let possibleCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+
+  for(let i=0; i < 5; i++){
+    randomString += possibleCharacters.charAt((Math.floor(Math.random()))*6);
+  }
+  return randomString;
+};
+
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -26,7 +36,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  res.send(generateRandomString()); // Respond with 'Ok' (we will replace this)
 });
 
 /////////////////
