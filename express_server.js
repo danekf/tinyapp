@@ -16,6 +16,7 @@ function generateRandomString() {
 
 
 const urlDatabase = {
+  //id: longURL
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
@@ -37,7 +38,9 @@ app.use(express.urlencoded({ extended: true }));
 
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
-  res.send(generateRandomString()); // Respond with 'Ok' (we will replace this)
+  let id = generateRandomString()
+  urlDatabase[id] = req.body;
+  res.send(id); // Respond with 'Ok' (we will replace this)
 });
 
 /////////////////
