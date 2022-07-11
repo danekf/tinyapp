@@ -5,10 +5,11 @@ app.set("view engine", "ejs") // set template enmjine as ejs
 
 function generateRandomString() {
   let randomString = '';
-  let possibleCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  let possibleCharacters = 'abcdefghijklmnopqrstuvwxyz0123456789'
 
-  for(let i=0; i < 5; i++){
-    randomString += possibleCharacters.charAt((Math.floor(Math.random()))*6);
+  for(let i=0; i < 6; i++){
+    let randomIndex = Math.floor(Math.random()*36)
+    randomString += possibleCharacters.charAt(randomIndex);
   }
   return randomString;
 };
