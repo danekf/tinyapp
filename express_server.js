@@ -21,6 +21,15 @@ app.listen(PORT, () => {
 app.use(express.urlencoded({ extended: true }));
 
 /////////////////
+//POST
+/////////////////
+
+app.post("/urls", (req, res) => {
+  console.log(req.body); // Log the POST request body to the console
+  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+});
+
+/////////////////
 //Routes
 /////////////////
 app.get("/urls.json", (req, res) => {
