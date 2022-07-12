@@ -38,9 +38,10 @@ app.use(express.urlencoded({ extended: true }));
 
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
+  
   let id = generateRandomString()
-  urlDatabase[id] = req.body;
-  res.send(id); // Respond with 'Ok' (we will replace this)
+  urlDatabase[id] = req.body.longURL;
+  res.redirect(`/urls/${id}`); // Respond with 'Ok' (we will replace this)
 });
 
 /////////////////
