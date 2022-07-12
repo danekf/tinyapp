@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 app.set("view engine", "ejs") // set template enmjine as ejs
+const cookieParser = require('cookie-parser') //require cookie parser for cookies
 
 function generateRandomString() {
   let randomString = '';
@@ -21,19 +22,25 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+////////////////////////////////////
+//Magic words to make things work
+////////////////////////////////////
+
 //Getting ready for POST requests, allows for use of objects in req.body as an example. Without these magic words it just wont work.
 app.use(express.urlencoded({ extended: true }));
+//user cookie parser so cookies work
+app.use(cookieParser());
+
+
+
 
 /////////////////
-//POST
+//Posts
 /////////////////
 
 //short URL page with link to redirect
@@ -46,10 +53,9 @@ app.post("/urls", (req, res) => {
 
 //Edit URL for existing id
 app.post("/urls/:id", (req, res) => {  
-let id = req.params.id;
-urlDatabase[id] = req.body.longURL
-res.redirect('/urls');
-
+  let id = req.params.id;
+  urlDatabase[id] = req.body.longURL
+  res.redirect('/urls');
 });
 
 //detele button on urls_index
@@ -57,12 +63,25 @@ app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
   delete urlDatabase[id]
   res.redirect(`/urls`); //send us to the URL index page again
+  
+});
+
+//log in, for _header.ejs
+app.post("/login", (req, res) => {
+  let user = req.body.username;
+  //set cookie
+  res.cookie('username:', user);
 
 });
+
 
 /////////////////
 //Routes
 /////////////////
+app.get("/", (req, res) => {
+  res.send("Hello!");
+});
+
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
