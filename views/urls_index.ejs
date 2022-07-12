@@ -27,7 +27,7 @@
           <tr>
             <th scope="col">Short URL ID</th>
             <th scope="col">Long URL</th>
-            <th scope="col">Shortened Link</th>
+            <th scope="col">EXTERMINATE! EXTERMINATE!</th>
           </tr>
         </thead>
         <tbody>
@@ -35,7 +35,14 @@
             <tr>
               <td><%= id %></td>
               <td><%= urls[id] %></td>
-              <td><a href='#'> Placeholder Text </a></td>
+              <td>
+                <form method="POST" action="/urls/<%= id %>/delete">
+                  <button type="submit"; class="btn btn-primary"; 
+                  style="border-color:crimson; background-color: white; color: crimson;">
+                  EXTERMINATE ENTRY
+                </button>
+                </form>
+            </td>
             </tr>
           <% } %>
         </tbody>

@@ -29,19 +29,27 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-//Getting ready for POST requests
+//Getting ready for POST requests, allows for use of objects in req.body as an example. Without these magic words it just wont work.
 app.use(express.urlencoded({ extended: true }));
 
 /////////////////
 //POST
 /////////////////
 
+//short URL page with link to redirect
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
-  
   let id = generateRandomString()
   urlDatabase[id] = req.body.longURL;
-  res.redirect(`/urls/${id}`); // Respond with 'Ok' (we will replace this)
+  res.redirect(`/urls/${id}`); 
+});
+
+//detele button on urls_index
+app.post("/urls/:id/delete", (req, res) => {
+  const id = req.params.id;
+  delete urlDatabase[id]
+  res.redirect(`/urls`); //send us to the URL index page again
+
 });
 
 /////////////////
@@ -64,8 +72,12 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+app.get("/u/:id", (req, res) => {
+  res.redirect(urlDatabase[req.params.id]);
+});
+
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase  };
+  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id]  };
   res.render("urls_show", templateVars);
 });
 
