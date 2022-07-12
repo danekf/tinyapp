@@ -44,6 +44,14 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${id}`); 
 });
 
+//Edit URL for existing id
+app.post("/urls/:id", (req, res) => {  
+let id = req.params.id;
+urlDatabase[id] = req.body.longURL
+res.redirect('/urls');
+
+});
+
 //detele button on urls_index
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
