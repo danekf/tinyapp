@@ -37,7 +37,7 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "no",
   },
   user2RandomID: {
     id: "user2RandomID",
@@ -162,17 +162,17 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = {currentUser: users[req.cookies["userId"]], urls: urlDatabase };
+  const templateVars = {user: users[req.cookies["userId"]], urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = {currentUser: users[req.cookies["userId"]]} 
+  const templateVars = {user: users[req.cookies["userId"]]} 
   res.render("urls_new", templateVars);
 });
 
 app.get("/register", (req, res) => {
-  const templateVars = {currentUser: users[req.cookies["userId"]]};
+  const templateVars = {user: users[req.cookies["userId"]]};
   res.render("urls_register", templateVars);
 });
 
@@ -182,7 +182,7 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = {currentUser: users[req.cookies["userId"]], users, id: req.params.id, longURL: urlDatabase[req.params.id]  };
+  const templateVars = {user: users[req.cookies["userId"]], id: req.params.id, longURL: urlDatabase[req.params.id]  };
   res.render("urls_show", templateVars);
 });
 
