@@ -36,6 +36,10 @@ app.use(express.urlencoded({ extended: true }));
 //user cookie parser so cookies work
 app.use(cookieParser());
 
+//////
+const morgan = require('morgan');
+app.use(morgan('dev'));
+
 
 
 
@@ -88,7 +92,14 @@ app.post("/logout", (req, res) => {
   //clear cookie
   res.clearCookie("username", user);
   res.redirect("/urls");
+});
 
+//register new user
+app.post("/register", (req, res) => {
+  // let user = req.cookies["username"];
+  // //clear cookie
+  // res.clearCookie("username", user);
+  // res.redirect("/urls");
 });
 
 
@@ -117,6 +128,11 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const templateVars = { username: req.cookies["username"]}
   res.render("urls_new", templateVars);
+});
+
+app.get("/register", (req, res) => {
+  const templateVars = { username: req.cookies["username"]}
+  res.render("urls_register", templateVars);
 });
 
 app.get("/u/:id", (req, res) => {
