@@ -1,21 +1,30 @@
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
-app.set("view engine", "ejs") // set template enmjine as ejs
-const cookieParser = require('cookie-parser') //require cookie parser for cookies
+app.set("view engine", "ejs"); // set template enmjine as ejs
+const cookieParser = require('cookie-parser'); //require cookie parser for cookies
+
+
+/////////////////////
+//Global functions
+/////////////////////
 
 function generateRandomString() {
   let randomString = '';
-  let possibleCharacters = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  let possibleCharacters = 'abcdefghijklmnopqrstuvwxyz0123456789';
 
-  for(let i=0; i < 6; i++){
-    let randomIndex = Math.floor(Math.random()*36)
+  for (let i = 0; i < 6; i++) {
+    let randomIndex = Math.floor(Math.random() * 36);
     randomString += possibleCharacters.charAt(randomIndex);
   }
   return randomString;
-};
+}
 
+/////////////////////
+//Global Objects
+/////////////////////
 
+//url database
 const urlDatabase = {
   //id: longURL
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -23,6 +32,25 @@ const urlDatabase = {
 };
 
 
+//users object, yeah this is not the best way to do it.
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
+
+
+
+///////////////
+//Server start
+///////////////
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
@@ -38,7 +66,7 @@ app.use(cookieParser());
 
 //////
 const morgan = require('morgan');
-app.use(morgan('dev'));
+//app.use(morgan('dev'));
 
 
 
@@ -47,25 +75,47 @@ app.use(morgan('dev'));
 //Posts
 /////////////////
 
-//short URL page with link to redirect
+//create new short URL with link, then redirect to home
 app.post("/urls", (req, res) => {
   console.log(req.body); // Log the POST request body to the console
-  let id = generateRandomString()
+  let id = generateRandomString();
   urlDatabase[id] = req.body.longURL;
-  res.redirect(`/urls/${id}`); 
+  res.redirect(`/urls/${id}`);
+});
+
+//register new user
+app.post("/register", (req, res) => {
+  let newEmail = req.body.email;
+  let newPassword = req.body.password;
+  let newId = generateRandomString();
+
+  // //have to create a new blank users[newID] with the objects beneath it or its not working...
+  users[newId] = {
+    id: '',
+    email: '',
+    password: ''
+  };
+  //set new values for new ID
+  users[newId].id = newId;
+  users[newId].email = newEmail;
+  users[newId].password = newPassword;
+
+  //set cookie with new user_id
+  res.cookie("userId", newId);
+  res.redirect(`/urls`);
 });
 
 //Edit URL for existing id
-app.post("/urls/:id", (req, res) => {  
+app.post("/urls/:id", (req, res) => {
   let id = req.params.id;
-  urlDatabase[id] = req.body.longURL
+  urlDatabase[id] = req.body.longURL;
   res.redirect('/urls');
 });
 
 //detele button on urls_index
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
-  delete urlDatabase[id]
+  delete urlDatabase[id];
   res.redirect(`/urls`); //send us to the URL index page again
   
 });
@@ -88,19 +138,11 @@ app.post("/login", (req, res) => {
 });
 //logout for user
 app.post("/logout", (req, res) => {
-  let user = req.cookies["username"];
   //clear cookie
-  res.clearCookie("username", user);
+  res.clearCookie("userId");
   res.redirect("/urls");
 });
 
-//register new user
-app.post("/register", (req, res) => {
-  // let user = req.cookies["username"];
-  // //clear cookie
-  // res.clearCookie("username", user);
-  // res.redirect("/urls");
-});
 
 
 
@@ -120,27 +162,27 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { username: req.cookies["username"], urls: urlDatabase };
-  console.log(`template variables are : ${templateVars.username}`);
+  const templateVars = {currentUser: users[req.cookies["userId"]], urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { username: req.cookies["username"]}
+  const templateVars = {currentUser: users[req.cookies["userId"]]} 
   res.render("urls_new", templateVars);
 });
 
 app.get("/register", (req, res) => {
-  const templateVars = { username: req.cookies["username"]}
+  const templateVars = {currentUser: users[req.cookies["userId"]]};
   res.render("urls_register", templateVars);
 });
+
 
 app.get("/u/:id", (req, res) => {
   res.redirect(urlDatabase[req.params.id]);
 });
 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { username: req.cookies["username"], id: req.params.id, longURL: urlDatabase[req.params.id]  };
+  const templateVars = {currentUser: users[req.cookies["userId"]], users, id: req.params.id, longURL: urlDatabase[req.params.id]  };
   res.render("urls_show", templateVars);
 });
 
