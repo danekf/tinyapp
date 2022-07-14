@@ -6,7 +6,7 @@ const cookieParser = require('cookie-parser'); //require cookie parser for cooki
 const cookieSession = require('cookie-session');//require cookie session for secure cookies
 //bcrypt stuff
 const bcrypt = require("bcryptjs");
-let salt = bcrypt.genSaltSync(10)
+let salt = bcrypt.genSaltSync(10);
 
 /////////////////////
 //Global Objects
@@ -28,8 +28,8 @@ const urlDatabase = {
   "9sm5xK": {
     longURL: "www.google.com",
     userId: "user2RandomID"
-  }, 
-}
+  },
+};
 
 //users object, yeah this is not the best way to do it.
 const users = {
@@ -50,6 +50,8 @@ const users = {
 //Global functions
 /////////////////////
 
+const getUserByValue = require('./helpers.js');
+
 function generateRandomString() {
   let randomString = '';
   let possibleCharacters = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -61,45 +63,35 @@ function generateRandomString() {
   return randomString;
 }
 
-const lookupUsersValue = function(value, parameter){
 
-  for(let element in users){
-    if(value === users[element][parameter]){
-      //if value is found for parameter in the dataset     
-      return users[element];
-    }
-  }
-  //if not found, return false
-  return false
-  
-}
 
 const userLoginCheck = (typedEmail, password) => {
-
-  const user = lookupUsersValue(typedEmail, "email");
+  let usersObj = users;
+  
+  const user = getUserByValue(typedEmail, "email", usersObj);
 
   if (!user) {
     return {Err: "403, email not registered", data: null};
   }
   //Iff password hashes DO NOT match, return error.
-  if(!bcrypt.compareSync(password, user.password)){
+  if (!bcrypt.compareSync(password, user.password)) {
     return {Err: "Incorrect Password", data: null};
   }
 
   return {Err: null, user};
   
-}
+};
 //return object with user owned URLS
 
 const urlsForUser = (id) => {
   let ownedURLS = {};
-  for (let shortURL in urlDatabase){
-    if (urlDatabase[shortURL].userId === id){
+  for (let shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].userId === id) {
       ownedURLS[shortURL] = urlDatabase[shortURL];
     }
   }
   return ownedURLS;
-}
+};
 
 
 ///////////////
@@ -143,15 +135,15 @@ const e = require("express");
 //create new short URL with link, then redirect to home
 app.post("/urls", (req, res) => {
   //login check for creating shorter urls
-  if(!req.session.user_id){
-    return res.send("Please Log in to see shortened URLS"); 
+  if (!req.session.user_id) {
+    return res.send("Please Log in to see shortened URLS");
   }
 
   let id = generateRandomString();
-  urlDatabase[id] ={
+  urlDatabase[id] = {
     longURL: '',
     userId: ''
-  }
+  };
 
   urlDatabase[id].longURL = req.body.longURL;
   urlDatabase[id].userId = req.session.user_id;
@@ -167,12 +159,12 @@ app.post("/register", (req, res) => {
   let encryptedPassword = bcrypt.hashSync(newPassword, salt);
   let newId = generateRandomString();
 
-  if(newEmail === '' || newPassword === '' ){
+  if (newEmail === '' || newPassword === '') {
     res.send("HTTP Error 400, blank email or password");
   }
 
   //if email is already registered, send to error message, else do nothing.
-  lookupUsersValue(newEmail, "email") ? res.send("Error 400, email already registered") : null ;
+  lookupUsersValue(newEmail, "email") ? res.send("Error 400, email already registered") : null;
 
 
   // //have to create a new blank users[newID] with the objects beneath it or its not working...
@@ -196,7 +188,7 @@ app.post("/register", (req, res) => {
 app.post("/urls/:id", (req, res) => {
   const {id} = req.params.id.longURL;
   
-console.log(id);
+  console.log(id);
 
   // urlDatabase[id].longURL = req.body.longURL;
   res.redirect('/urls');
@@ -220,10 +212,10 @@ app.post("/login", (req, res) => {
 
   const {Err, user} = userLoginCheck(email, password);
 
- if(Err){
-  return res.send(Err);
- }
- req.session.user_id = user.id;  
+  if (Err) {
+    return res.send(Err);
+  }
+  req.session.user_id = user.id;
   res.redirect("/urls");
 
 });
@@ -256,8 +248,8 @@ app.get("/hello", (req, res) => {
 
 app.get("/login", (req, res) => {
   //if logged in, redirect to URLS
-  if(req.session.user_id){
-    return res.redirect("/urls"); 
+  if (req.session.user_id) {
+    return res.redirect("/urls");
   }
   const templateVars = {user: users[req.session.user_id], urls: urlDatabase };
   res.render("urls_login", templateVars);
@@ -265,13 +257,13 @@ app.get("/login", (req, res) => {
 
 app.get("/urls", (req, res) => {
 
-    //if not logged in, redirect to login
-    if(!req.session.user_id){
-      return res.redirect("/login"); 
-    }
+  //if not logged in, redirect to login
+  if (!req.session.user_id) {
+    return res.redirect("/login");
+  }
 
-    let usersURLs = urlsForUser(req.session.user_id);
-    console.log(usersURLs);
+  let usersURLs = urlsForUser(req.session.user_id);
+  console.log(usersURLs);
   
   const templateVars = {user: users[req.session.user_id], urls: usersURLs };
 
@@ -281,18 +273,18 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
 
   //if not logged in, redirect to login
-  if(!req.session.user_id){
-    return res.redirect("/login"); 
+  if (!req.session.user_id) {
+    return res.redirect("/login");
   }
 
-  const templateVars = {user: users[req.session.user_id]} 
+  const templateVars = {user: users[req.session.user_id]};
   res.render("urls_new", templateVars);
 });
 
 app.get("/register", (req, res) => {
   //if logged in, redirect to URLS
-  if(req.session.user_id){
-    return res.redirect("/urls"); 
+  if (req.session.user_id) {
+    return res.redirect("/urls");
   }
   const templateVars = {user: users[req.session.user_id]};
   res.render("urls_register", templateVars);
@@ -305,18 +297,18 @@ app.get("/u/:id", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
 
-  let id = req.params.id
+  let id = req.params.id;
 
-  if(!urlDatabase.hasOwnProperty(id)){
-    res.send("This shortened URL ID is not in the database")
+  if (!urlDatabase.hasOwnProperty(id)) {
+    res.send("This shortened URL ID is not in the database");
   }
   //login if not logged in
-  if(!req.session.user_id){
-    return res.redirect("/login"); 
+  if (!req.session.user_id) {
+    return res.redirect("/login");
   }
   //cannot edit if not owner
-  if(req.session.user_id !== urlDatabase[id].userId){
-    return res.send("You do not have permission to edit this entry")
+  if (req.session.user_id !== urlDatabase[id].userId) {
+    return res.send("You do not have permission to edit this entry");
   }
 
   const templateVars = {user: users[req.session.user_id], id: req.params.id, longURL: urlDatabase[req.params.id].longURL  };
