@@ -4,22 +4,6 @@ const PORT = 8080; // default port 8080
 app.set("view engine", "ejs"); // set template enmjine as ejs
 const cookieParser = require('cookie-parser'); //require cookie parser for cookies
 
-
-/////////////////////
-//Global functions
-/////////////////////
-
-function generateRandomString() {
-  let randomString = '';
-  let possibleCharacters = 'abcdefghijklmnopqrstuvwxyz0123456789';
-
-  for (let i = 0; i < 6; i++) {
-    let randomIndex = Math.floor(Math.random() * 36);
-    randomString += possibleCharacters.charAt(randomIndex);
-  }
-  return randomString;
-}
-
 /////////////////////
 //Global Objects
 /////////////////////
@@ -47,6 +31,45 @@ const users = {
 };
 
 
+/////////////////////
+//Global functions
+/////////////////////
+
+function generateRandomString() {
+  let randomString = '';
+  let possibleCharacters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+
+  for (let i = 0; i < 6; i++) {
+    let randomIndex = Math.floor(Math.random() * 36);
+    randomString += possibleCharacters.charAt(randomIndex);
+  }
+  return randomString;
+}
+
+const lookupUsersValue = function(value, parameter){
+
+  for(let element in users){
+    if(value === users[element][parameter]){
+      //if value is found for parameter in the dataset     
+      return true;
+    }
+  }
+  //if not found, return false
+  return false
+  
+}
+
+const userLoginCheck = (typedEmail, passwordHash) => {
+   for (let element in users){
+    if (users[element].email.includes(typedEmail) && users[element].password.includes(passwordHash)){
+      return {Err: null, user: users[element]};
+    }
+  }
+  return {Err: "Username or password incorrect", user: null};
+}
+
+
+
 
 ///////////////
 //Server start
@@ -66,6 +89,7 @@ app.use(cookieParser());
 
 //////
 const morgan = require('morgan');
+const e = require("express");
 //app.use(morgan('dev'));
 
 
@@ -89,11 +113,20 @@ app.post("/register", (req, res) => {
   let newPassword = req.body.password;
   let newId = generateRandomString();
 
+  if(newEmail === '' || newPassword === '' ){
+    res.send("HTTP Error 400, blank email or password");
+  }
+
+  //if email is already registered, send to error message, else do nothing.
+  lookupUsersValue(newEmail, "email") ? res.send("Error 400, email already registered") : null ;
+
+
   // //have to create a new blank users[newID] with the objects beneath it or its not working...
   users[newId] = {
     id: '',
     email: '',
     password: ''
+
   };
   //set new values for new ID
   users[newId].id = newId;
@@ -107,7 +140,7 @@ app.post("/register", (req, res) => {
 
 //Edit URL for existing id
 app.post("/urls/:id", (req, res) => {
-  let id = req.params.id;
+  const {id} = req.params.id;
   urlDatabase[id] = req.body.longURL;
   res.redirect('/urls');
 });
@@ -120,22 +153,24 @@ app.post("/urls/:id/delete", (req, res) => {
   
 });
 
-//log in, for _header.ejs
+//log in
 app.post("/login", (req, res) => {
-  let user = req.body.username;
-  //set cookie
-  res.cookie('username', user);
+  //set sername and password from login page
+  const {email , password} = req.body;
+  //check username and password combo, if not found, send to error
+  const {Err, user} = userLoginCheck(email, password);
+
+ if(Err){
+  return res.send(Err);
+ }
+
+
+  res.cookie('userId', user.id);  
   res.redirect("/urls");
 
 });
 
-app.post("/login", (req, res) => {
-  let user = req.body.username;
-  //set cookie
-  res.cookie('username', user);
-  res.redirect("/urls");
 
-});
 //logout for user
 app.post("/logout", (req, res) => {
   //clear cookie
@@ -159,6 +194,11 @@ app.get("/urls.json", (req, res) => {
 
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
+});
+
+app.get("/login", (req, res) => {
+  const templateVars = {user: users[req.cookies["userId"]], urls: urlDatabase };
+  res.render("urls_login", templateVars);
 });
 
 app.get("/urls", (req, res) => {
