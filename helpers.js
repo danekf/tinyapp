@@ -16,5 +16,4 @@
 
 
 
-
-module.exports = getUserByValue
+module.exports = {getUserByValue}

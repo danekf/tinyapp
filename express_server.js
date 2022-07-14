@@ -50,7 +50,7 @@ const users = {
 //Global functions
 /////////////////////
 
-const getUserByValue = require('./helpers.js');
+const {getUserByValue} = require('./helpers.js');
 
 function generateRandomString() {
   let randomString = '';
