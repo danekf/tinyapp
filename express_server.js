@@ -50,18 +50,9 @@ const users = {
 //Global functions
 /////////////////////
 
-const {getUserByValue} = require('./helpers.js');
+const {getUserByValue, generateRandomString} = require('./helpers.js');
 
-function generateRandomString() {
-  let randomString = '';
-  let possibleCharacters = 'abcdefghijklmnopqrstuvwxyz0123456789';
 
-  for (let i = 0; i < 6; i++) {
-    let randomIndex = Math.floor(Math.random() * 36);
-    randomString += possibleCharacters.charAt(randomIndex);
-  }
-  return randomString;
-}
 
 
 
@@ -164,7 +155,7 @@ app.post("/register", (req, res) => {
   }
 
   //if email is already registered, send to error message, else do nothing.
-  lookupUsersValue(newEmail, "email") ? res.send("Error 400, email already registered") : null;
+  getUserByValue(newEmail, "email", users) ? res.send("Error 400, email already registered") : null;
 
 
   // //have to create a new blank users[newID] with the objects beneath it or its not working...
@@ -186,18 +177,16 @@ app.post("/register", (req, res) => {
 
 //Edit URL for existing id
 app.post("/urls/:id", (req, res) => {
-  const {id} = req.params.id.longURL;
-  
-  console.log(id);
+  let id = req.params.id;
 
-  // urlDatabase[id].longURL = req.body.longURL;
+  urlDatabase[id].longURL = req.body.longURL;
   res.redirect('/urls');
 });
 
 //detele button on urls_index
 app.post("/urls/:id/delete", (req, res) => {
-  const {id} = req.params.id;
-
+  let id = req.params.id;
+  
   delete urlDatabase[id];
   res.redirect(`/urls`); //send us to the URL index page again
   
@@ -263,7 +252,6 @@ app.get("/urls", (req, res) => {
   }
 
   let usersURLs = urlsForUser(req.session.user_id);
-  console.log(usersURLs);
   
   const templateVars = {user: users[req.session.user_id], urls: usersURLs };
 
