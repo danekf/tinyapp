@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 app.set("view engine", "ejs"); // set template enmjine as ejs
 const cookieParser = require('cookie-parser'); //require cookie parser for cookies
+const cookieSession = require('cookie-session');//require cookie session for secure cookies
 //bcrypt stuff
 const bcrypt = require("bcryptjs");
 let salt = bcrypt.genSaltSync(10)
@@ -116,6 +117,15 @@ app.listen(PORT, () => {
 app.use(express.urlencoded({ extended: true }));
 //user cookie parser so cookies work
 app.use(cookieParser());
+app.use(
+  cookieSession({
+    name: "session",
+    keys: ["A happy little grapefruit", "Friends stay friends forever"],
+
+    // Cookie Options
+    // maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  })
+);
 
 
 //////
@@ -133,7 +143,7 @@ const e = require("express");
 //create new short URL with link, then redirect to home
 app.post("/urls", (req, res) => {
   //login check for creating shorter urls
-  if(!req.cookies["userId"]){
+  if(!req.session.user_id){
     return res.send("Please Log in to see shortened URLS"); 
   }
 
@@ -144,7 +154,7 @@ app.post("/urls", (req, res) => {
   }
 
   urlDatabase[id].longURL = req.body.longURL;
-  urlDatabase[id].userId = req.cookies["userId"];
+  urlDatabase[id].userId = req.session.user_id;
 
   res.redirect(`/urls/${id}`);
 
@@ -178,7 +188,7 @@ app.post("/register", (req, res) => {
   users[newId].password = encryptedPassword;
 
   //set cookie with new user_id
-  res.cookie("userId", newId);
+  req.session.user_id = newId;
   res.redirect(`/urls`);
 });
 
@@ -213,7 +223,7 @@ app.post("/login", (req, res) => {
  if(Err){
   return res.send(Err);
  }
-  res.cookie('userId', user.id);  
+ req.session.user_id = user.id;  
   res.redirect("/urls");
 
 });
@@ -222,7 +232,7 @@ app.post("/login", (req, res) => {
 //logout for user
 app.post("/logout", (req, res) => {
   //clear cookie
-  res.clearCookie("userId");
+  req.session.user_id = null;
   res.redirect("/urls");
 });
 
@@ -246,24 +256,24 @@ app.get("/hello", (req, res) => {
 
 app.get("/login", (req, res) => {
   //if logged in, redirect to URLS
-  if(req.cookies["userId"]){
+  if(req.session.user_id){
     return res.redirect("/urls"); 
   }
-  const templateVars = {user: users[req.cookies["userId"]], urls: urlDatabase };
+  const templateVars = {user: users[req.session.user_id], urls: urlDatabase };
   res.render("urls_login", templateVars);
 });
 
 app.get("/urls", (req, res) => {
 
     //if not logged in, redirect to login
-    if(!req.cookies["userId"]){
+    if(!req.session.user_id){
       return res.redirect("/login"); 
     }
 
-    let usersURLs = urlsForUser(req.cookies["userId"]);
+    let usersURLs = urlsForUser(req.session.user_id);
     console.log(usersURLs);
   
-  const templateVars = {user: users[req.cookies["userId"]], urls: usersURLs };
+  const templateVars = {user: users[req.session.user_id], urls: usersURLs };
 
   res.render("urls_index", templateVars);
 });
@@ -271,20 +281,20 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
 
   //if not logged in, redirect to login
-  if(!req.cookies["userId"]){
+  if(!req.session.user_id){
     return res.redirect("/login"); 
   }
 
-  const templateVars = {user: users[req.cookies["userId"]]} 
+  const templateVars = {user: users[req.session.user_id]} 
   res.render("urls_new", templateVars);
 });
 
 app.get("/register", (req, res) => {
   //if logged in, redirect to URLS
-  if(req.cookies["userId"]){
+  if(req.session.user_id){
     return res.redirect("/urls"); 
   }
-  const templateVars = {user: users[req.cookies["userId"]]};
+  const templateVars = {user: users[req.session.user_id]};
   res.render("urls_register", templateVars);
 });
 
@@ -301,15 +311,15 @@ app.get("/urls/:id", (req, res) => {
     res.send("This shortened URL ID is not in the database")
   }
   //login if not logged in
-  if(!req.cookies["userId"]){
+  if(!req.session.user_id){
     return res.redirect("/login"); 
   }
   //cannot edit if not owner
-  if(req.cookies["userId"] !== urlDatabase[id].userId){
+  if(req.session.user_id !== urlDatabase[id].userId){
     return res.send("You do not have permission to edit this entry")
   }
 
-  const templateVars = {user: users[req.cookies["userId"]], id: req.params.id, longURL: urlDatabase[req.params.id].longURL  };
+  const templateVars = {user: users[req.session.user_id], id: req.params.id, longURL: urlDatabase[req.params.id].longURL  };
   res.render("urls_show", templateVars);
 });
 
