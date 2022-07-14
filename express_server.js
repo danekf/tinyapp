@@ -51,7 +51,7 @@ const lookupUsersValue = function(value, parameter){
   for(let element in users){
     if(value === users[element][parameter]){
       //if value is found for parameter in the dataset     
-      return true;
+      return users[element];
     }
   }
   //if not found, return false
@@ -60,12 +60,18 @@ const lookupUsersValue = function(value, parameter){
 }
 
 const userLoginCheck = (typedEmail, passwordHash) => {
-   for (let element in users){
-    if (users[element].email.includes(typedEmail) && users[element].password.includes(passwordHash)){
-      return {Err: null, user: users[element]};
-    }
+
+  const user = lookupUsersValue(typedEmail, "email");
+
+  if (!user) {
+    return {Err: "403, email not registered", data: null};
   }
-  return {Err: "Username or password incorrect", user: null};
+  if(user.password !== passwordHash){
+    return {Err: "Incorrect Password", data: null};
+  }
+
+  return {Err: null, user};
+  
 }
 
 
