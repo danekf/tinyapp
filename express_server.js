@@ -3,6 +3,9 @@ const app = express();
 const PORT = 8080; // default port 8080
 app.set("view engine", "ejs"); // set template enmjine as ejs
 const cookieParser = require('cookie-parser'); //require cookie parser for cookies
+//bcrypt stuff
+const bcrypt = require("bcryptjs");
+let salt = bcrypt.genSaltSync(10)
 
 /////////////////////
 //Global Objects
@@ -32,12 +35,12 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "no",
+    password: bcrypt.hashSync("no", salt),
   },
   user2RandomID: {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk",
+    password: bcrypt.hashSync("dishwasher-funk", salt)
   },
 };
 
@@ -70,14 +73,15 @@ const lookupUsersValue = function(value, parameter){
   
 }
 
-const userLoginCheck = (typedEmail, passwordHash) => {
+const userLoginCheck = (typedEmail, password) => {
 
   const user = lookupUsersValue(typedEmail, "email");
 
   if (!user) {
     return {Err: "403, email not registered", data: null};
   }
-  if(user.password !== passwordHash){
+  //Iff password hashes DO NOT match, return error.
+  if(!bcrypt.compareSync(password, user.password)){
     return {Err: "Incorrect Password", data: null};
   }
 
@@ -150,6 +154,7 @@ app.post("/urls", (req, res) => {
 app.post("/register", (req, res) => {
   let newEmail = req.body.email;
   let newPassword = req.body.password;
+  let encryptedPassword = bcrypt.hashSync(newPassword, salt);
   let newId = generateRandomString();
 
   if(newEmail === '' || newPassword === '' ){
@@ -170,7 +175,7 @@ app.post("/register", (req, res) => {
   //set new values for new ID
   users[newId].id = newId;
   users[newId].email = newEmail;
-  users[newId].password = newPassword;
+  users[newId].password = encryptedPassword;
 
   //set cookie with new user_id
   res.cookie("userId", newId);
@@ -201,6 +206,8 @@ app.post("/login", (req, res) => {
   //set sername and password from login page
   const {email , password} = req.body;
   //check username and password combo, if not found, send to error
+
+
   const {Err, user} = userLoginCheck(email, password);
 
  if(Err){
