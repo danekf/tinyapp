@@ -76,7 +76,6 @@ const userLoginCheck = (typedEmail, passwordHash) => {
 
 
 
-
 ///////////////
 //Server start
 ///////////////
@@ -85,13 +84,14 @@ app.listen(PORT, () => {
 });
 
 ////////////////////////////////////
-//Magic words to make things work
+//Magic words to make things work (middleware)
 ////////////////////////////////////
 
 //Getting ready for POST requests, allows for use of objects in req.body as an example. Without these magic words it just wont work.
 app.use(express.urlencoded({ extended: true }));
 //user cookie parser so cookies work
 app.use(cookieParser());
+
 
 //////
 const morgan = require('morgan');
@@ -107,6 +107,10 @@ const e = require("express");
 
 //create new short URL with link, then redirect to home
 app.post("/urls", (req, res) => {
+  if(!req.cookies["userId"]){
+    return res.send("Please Log in to shorted URLS"); 
+  }
+
   console.log(req.body); // Log the POST request body to the console
   let id = generateRandomString();
   urlDatabase[id] = req.body.longURL;
@@ -147,6 +151,7 @@ app.post("/register", (req, res) => {
 //Edit URL for existing id
 app.post("/urls/:id", (req, res) => {
   const {id} = req.params.id;
+
   urlDatabase[id] = req.body.longURL;
   res.redirect('/urls');
 });
@@ -169,8 +174,6 @@ app.post("/login", (req, res) => {
  if(Err){
   return res.send(Err);
  }
-
-
   res.cookie('userId', user.id);  
   res.redirect("/urls");
 
@@ -203,21 +206,41 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
+  //if logged in, redirect to URLS
+  if(req.cookies["userId"]){
+    return res.redirect("/urls"); 
+  }
   const templateVars = {user: users[req.cookies["userId"]], urls: urlDatabase };
   res.render("urls_login", templateVars);
 });
 
 app.get("/urls", (req, res) => {
+
+    //if not logged in, redirect to login
+    if(!req.cookies["userId"]){
+      return res.redirect("/login"); 
+    }
+  
   const templateVars = {user: users[req.cookies["userId"]], urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
+
+  //if not logged in, redirect to login
+  if(!req.cookies["userId"]){
+    return res.redirect("/login"); 
+  }
+
   const templateVars = {user: users[req.cookies["userId"]]} 
   res.render("urls_new", templateVars);
 });
 
 app.get("/register", (req, res) => {
+  //if logged in, redirect to URLS
+  if(req.cookies["userId"]){
+    return res.redirect("/urls"); 
+  }
   const templateVars = {user: users[req.cookies["userId"]]};
   res.render("urls_register", templateVars);
 });
@@ -228,6 +251,13 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
+
+  let id = req.params.id
+
+  if(!urlDatabase.hasOwnProperty(id)){
+    res.send("This shortened URL ID is not in the database")
+  }
+
   const templateVars = {user: users[req.cookies["userId"]], id: req.params.id, longURL: urlDatabase[req.params.id]  };
   res.render("urls_show", templateVars);
 });
