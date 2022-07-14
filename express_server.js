@@ -9,12 +9,23 @@ const cookieParser = require('cookie-parser'); //require cookie parser for cooki
 /////////////////////
 
 //url database
-const urlDatabase = {
-  //id: longURL
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
-};
+// const urlDatabase = {
+//   //id: longURL
+//   "b2xVn2": "http://www.lighthouselabs.ca",
+//   "9sm5xK": "http://www.google.com"
+// };
 
+const urlDatabase = {
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userId: "userRandomID"
+  },
+
+  "9sm5xK": {
+    longURL: "www.google.com",
+    userId: "user2RandomID"
+  }, 
+}
 
 //users object, yeah this is not the best way to do it.
 const users = {
@@ -73,7 +84,17 @@ const userLoginCheck = (typedEmail, passwordHash) => {
   return {Err: null, user};
   
 }
+//return object with user owned URLS
 
+const urlsForUser = (id) => {
+  let ownedURLS = {};
+  for (let shortURL in urlDatabase){
+    if (urlDatabase[shortURL].userId === id){
+      ownedURLS[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  return ownedURLS;
+}
 
 
 ///////////////
@@ -107,14 +128,22 @@ const e = require("express");
 
 //create new short URL with link, then redirect to home
 app.post("/urls", (req, res) => {
+  //login check for creating shorter urls
   if(!req.cookies["userId"]){
-    return res.send("Please Log in to shorted URLS"); 
+    return res.send("Please Log in to see shortened URLS"); 
   }
 
-  console.log(req.body); // Log the POST request body to the console
   let id = generateRandomString();
-  urlDatabase[id] = req.body.longURL;
+  urlDatabase[id] ={
+    longURL: '',
+    userId: ''
+  }
+
+  urlDatabase[id].longURL = req.body.longURL;
+  urlDatabase[id].userId = req.cookies["userId"];
+
   res.redirect(`/urls/${id}`);
+
 });
 
 //register new user
@@ -150,15 +179,18 @@ app.post("/register", (req, res) => {
 
 //Edit URL for existing id
 app.post("/urls/:id", (req, res) => {
-  const {id} = req.params.id;
+  const {id} = req.params.id.longURL;
+  
+console.log(id);
 
-  urlDatabase[id] = req.body.longURL;
+  // urlDatabase[id].longURL = req.body.longURL;
   res.redirect('/urls');
 });
 
 //detele button on urls_index
 app.post("/urls/:id/delete", (req, res) => {
-  const id = req.params.id;
+  const {id} = req.params.id;
+
   delete urlDatabase[id];
   res.redirect(`/urls`); //send us to the URL index page again
   
@@ -220,8 +252,12 @@ app.get("/urls", (req, res) => {
     if(!req.cookies["userId"]){
       return res.redirect("/login"); 
     }
+
+    let usersURLs = urlsForUser(req.cookies["userId"]);
+    console.log(usersURLs);
   
-  const templateVars = {user: users[req.cookies["userId"]], urls: urlDatabase };
+  const templateVars = {user: users[req.cookies["userId"]], urls: usersURLs };
+
   res.render("urls_index", templateVars);
 });
 
@@ -257,8 +293,16 @@ app.get("/urls/:id", (req, res) => {
   if(!urlDatabase.hasOwnProperty(id)){
     res.send("This shortened URL ID is not in the database")
   }
+  //login if not logged in
+  if(!req.cookies["userId"]){
+    return res.redirect("/login"); 
+  }
+  //cannot edit if not owner
+  if(req.cookies["userId"] !== urlDatabase[id].userId){
+    return res.send("You do not have permission to edit this entry")
+  }
 
-  const templateVars = {user: users[req.cookies["userId"]], id: req.params.id, longURL: urlDatabase[req.params.id]  };
+  const templateVars = {user: users[req.cookies["userId"]], id: req.params.id, longURL: urlDatabase[req.params.id].longURL  };
   res.render("urls_show", templateVars);
 });
 
