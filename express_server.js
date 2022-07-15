@@ -12,13 +12,6 @@ const salt = bcrypt.genSaltSync(10);
 //Global Objects
 /////////////////////
 
-//url database
-// const urlDatabase = {
-//   //id: longURL
-//   "b2xVn2": "http://www.lighthouselabs.ca",
-//   "9sm5xK": "http://www.google.com"
-// };
-
 const urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
@@ -44,7 +37,6 @@ const users = {
     password: bcrypt.hashSync("dishwasher-funk", salt)
   },
 };
-
 
 /////////////////////
 //Global functions
@@ -268,22 +260,12 @@ app.get("/u/:id", (req, res) => {
   res.redirect(urlDatabase[req.params.id]);
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 ///////////////
 //Server start
 ///////////////
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
+
+module.exports = {salt}
