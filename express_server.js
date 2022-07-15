@@ -85,12 +85,6 @@ const urlsForUser = (id) => {
 };
 
 
-///////////////
-//Server start
-///////////////
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
 
 ////////////////////////////////////
 //Magic words to make things work (middleware)
@@ -104,72 +98,72 @@ app.use(
   cookieSession({
     name: "session",
     keys: ["A happy little grapefruit", "Friends stay friends forever"],
-
+    
     // Cookie Options
     // maxAge: 24 * 60 * 60 * 1000, // 24 hours
   })
-);
-
-
-//////
-const morgan = require('morgan');
-const e = require("express");
-//app.use(morgan('dev'));
-
-
-
-
-/////////////////
-//Posts
-/////////////////
-
-//create new short URL with link, then redirect to home
-app.post("/urls", (req, res) => {
-  //login check for creating shorter urls
-  if (!req.session.user_id) {
-    return res.send("Please Log in to see shortened URLS");
+  );
+  
+  
+  //////
+  const morgan = require('morgan');
+  const e = require("express");
+  //app.use(morgan('dev'));
+  
+  
+  
+  
+  /////////////////
+  //Posts
+  /////////////////
+  
+  //create new short URL with link, then redirect to home
+  app.post("/urls", (req, res) => {
+    //login check for creating shorter urls
+    if (!req.session.user_id) {
+      return res.send("Please Log in to see shortened URLS");
+    }
+    
+    let id = generateRandomString();
+    urlDatabase[id] = {
+      longURL: '',
+      userId: ''
+    };
+    
+    urlDatabase[id].longURL = req.body.longURL;
+    urlDatabase[id].userId = req.session.user_id;
+    
+    res.redirect(`/urls/${id}`);
+    
+  });
+  
+  //register new user
+  app.post("/register", (req, res) => {
+    let newEmail = req.body.email;
+    let newPassword = req.body.password;
+    let encryptedPassword = bcrypt.hashSync(newPassword, salt);
+    let newId = generateRandomString();
+    
+    if (newEmail === '' || newPassword === '') {
+      res.send("HTTP Error 400, blank email or password");
   }
-
-  let id = generateRandomString();
-  urlDatabase[id] = {
-    longURL: '',
-    userId: ''
-  };
-
-  urlDatabase[id].longURL = req.body.longURL;
-  urlDatabase[id].userId = req.session.user_id;
-
-  res.redirect(`/urls/${id}`);
-
-});
-
-//register new user
-app.post("/register", (req, res) => {
-  let newEmail = req.body.email;
-  let newPassword = req.body.password;
-  let encryptedPassword = bcrypt.hashSync(newPassword, salt);
-  let newId = generateRandomString();
-
-  if (newEmail === '' || newPassword === '') {
-    res.send("HTTP Error 400, blank email or password");
-  }
-
+  
   //if email is already registered, send to error message, else do nothing.
   getUserByValue(newEmail, "email", users) ? res.send("Error 400, email already registered") : null;
-
-
+  
+  
   // //have to create a new blank users[newID] with the objects beneath it or its not working...
   users[newId] = {
     id: '',
     email: '',
     password: ''
-
+    
   };
   //set new values for new ID
   users[newId].id = newId;
   users[newId].email = newEmail;
   users[newId].password = encryptedPassword;
-
+  
   //set cookie with new user_id
   req.session.user_id = newId;
   res.redirect(`/urls`);
@@ -178,7 +172,7 @@ app.post("/register", (req, res) => {
 //Edit URL for existing id
 app.post("/urls/:id", (req, res) => {
   let id = req.params.id;
-
+  
   urlDatabase[id].longURL = req.body.longURL;
   res.redirect('/urls');
 });
@@ -197,16 +191,16 @@ app.post("/login", (req, res) => {
   //set sername and password from login page
   const {email , password} = req.body;
   //check username and password combo, if not found, send to error
-
-
+  
+  
   const {Err, user} = userLoginCheck(email, password);
-
+  
   if (Err) {
     return res.send(Err);
   }
   req.session.user_id = user.id;
   res.redirect("/urls");
-
+  
 });
 
 
@@ -245,26 +239,26 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-
+  
   //if not logged in, redirect to login
   if (!req.session.user_id) {
     return res.redirect("/login");
   }
-
+  
   let usersURLs = urlsForUser(req.session.user_id);
   
   const templateVars = {user: users[req.session.user_id], urls: usersURLs };
-
+  
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-
+  
   //if not logged in, redirect to login
   if (!req.session.user_id) {
     return res.redirect("/login");
   }
-
+  
   const templateVars = {user: users[req.session.user_id]};
   res.render("urls_new", templateVars);
 });
@@ -284,7 +278,7 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-
+  
   let id = req.params.id;
 
   if (!urlDatabase.hasOwnProperty(id)) {
@@ -304,3 +298,9 @@ app.get("/urls/:id", (req, res) => {
 });
 
 
+///////////////
+//Server start
+///////////////
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
+});
