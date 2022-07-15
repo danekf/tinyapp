@@ -257,7 +257,9 @@ app.post("/urls/:id/delete", (req, res) => {
 
 //link to longURL
 app.get("/u/:id", (req, res) => {
-  res.redirect(urlDatabase[req.params.id]);
+  console.log(req.params.id);
+  console.log(urlDatabase[req.params.id]);
+  res.redirect(urlDatabase[req.params.id].longURL);
 });
 
 ///////////////
