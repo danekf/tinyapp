@@ -52,10 +52,6 @@ const users = {
 
 const {getUserByValue, generateRandomString} = require('./helpers.js');
 
-
-
-
-
 const userLoginCheck = (typedEmail, password) => {
   const usersObj = users;
   
@@ -72,6 +68,7 @@ const userLoginCheck = (typedEmail, password) => {
   return {Err: null, user};
   
 };
+
 //return object with user owned URLS
 
 const urlsForUser = (id) => {
@@ -102,15 +99,32 @@ app.use(
 
   })
 );
-  
+ 
 /////////////////
-//Posts
+//Routes
 /////////////////
+app.get("/", (req, res) => {
+  //redirect user if they just try to open localhost/port  
+ res.redirect("/urls")
+});
+
+app.get("/urls", (req, res) => {
   
-//create new short URL with link, then redirect to home
+  //if not logged in, redirect to login
+  if (!req.session.userId) {
+    return res.redirect("/login");
+  }
+  
+  const usersURLs = urlsForUser(req.session.userId);
+  
+  const templateVars = {user: users[req.session.userId], urls: usersURLs };
+  
+  res.render("urls_index", templateVars);
+});
+
 app.post("/urls", (req, res) => {
   //login check for creating shorter urls
-  if (!req.session.user_id) {
+  if (!req.session.userId) {
     return res.send("Please Log in to see shortened URLS");
   }
     
@@ -121,13 +135,22 @@ app.post("/urls", (req, res) => {
   };
     
   urlDatabase[id].longURL = req.body.longURL;
-  urlDatabase[id].userId = req.session.user_id;
+  urlDatabase[id].userId = req.session.userId;
     
   res.redirect(`/urls/${id}`);
     
 });
   
 //register new user
+app.get("/register", (req, res) => {
+  //if logged in, redirect to URLS
+  if (req.session.userId) {
+    return res.redirect("/urls");
+  }
+  const templateVars = {user: users[req.session.userId]};
+  res.render("urls_register", templateVars);
+});
+
 app.post("/register", (req, res) => {
   const newEmail = req.body.email;
   const newPassword = req.body.password;
@@ -159,6 +182,11 @@ app.post("/register", (req, res) => {
   res.redirect(`/urls`);
 });
 
+//link to longURL
+app.get("/u/:id", (req, res) => {
+  res.redirect(urlDatabase[req.params.id]);
+});
+
 //Edit URL for existing id
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
@@ -167,7 +195,28 @@ app.post("/urls/:id", (req, res) => {
   res.redirect('/urls');
 });
 
-//detele button on urls_index
+app.get("/urls/:id", (req, res) => {
+  
+  const id = req.params.id;
+
+  if (!urlDatabase.hasOwnProperty(id)) {
+    res.send("This shortened URL ID is not in the database");
+  }
+  //login if not logged in
+  if (!req.session.userId) {
+    return res.redirect("/login");
+  }
+  //cannot edit if not owner
+  if (req.session.userId !== urlDatabase[id].userId) {
+    return res.send("You do not have permission to edit this entry");
+  }
+
+  const templateVars = {user: users[req.session.userId], id: req.params.id, longURL: urlDatabase[req.params.id].longURL  };
+  res.render("urls_show", templateVars);
+});
+
+
+//detele on urls_index
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
   
@@ -177,6 +226,14 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 //log in
+app.get("/login", (req, res) => {
+  //if logged in, redirect to URLS
+  if (req.session.userId) {
+    return res.redirect("/urls");
+  }
+  const templateVars = {user: users[req.session.userId], urls: urlDatabase };
+  res.render("urls_login", templateVars);
+});
 app.post("/login", (req, res) => {
   //set sername and password from login page
   const {email , password} = req.body;
@@ -193,7 +250,6 @@ app.post("/login", (req, res) => {
   
 });
 
-
 //logout for user
 app.post("/logout", (req, res) => {
   //clear cookie
@@ -201,80 +257,28 @@ app.post("/logout", (req, res) => {
   res.redirect("/urls");
 });
 
-
-
-
-/////////////////
-//Routes
-/////////////////
-
-app.get("/login", (req, res) => {
-  //if logged in, redirect to URLS
-  if (req.session.user_id) {
-    return res.redirect("/urls");
-  }
-  const templateVars = {user: users[req.session.user_id], urls: urlDatabase };
-  res.render("urls_login", templateVars);
-});
-
-app.get("/urls", (req, res) => {
-  
-  //if not logged in, redirect to login
-  if (!req.session.user_id) {
-    return res.redirect("/login");
-  }
-  
-  const usersURLs = urlsForUser(req.session.user_id);
-  
-  const templateVars = {user: users[req.session.user_id], urls: usersURLs };
-  
-  res.render("urls_index", templateVars);
-});
-
 app.get("/urls/new", (req, res) => {
   
   //if not logged in, redirect to login
-  if (!req.session.user_id) {
+  if (!req.session.userId) {
     return res.redirect("/login");
   }
   
-  const templateVars = {user: users[req.session.user_id]};
+  const templateVars = {user: users[req.session.userId]};
   res.render("urls_new", templateVars);
 });
 
-app.get("/register", (req, res) => {
-  //if logged in, redirect to URLS
-  if (req.session.user_id) {
-    return res.redirect("/urls");
-  }
-  const templateVars = {user: users[req.session.user_id]};
-  res.render("urls_register", templateVars);
-});
 
 
-app.get("/u/:id", (req, res) => {
-  res.redirect(urlDatabase[req.params.id]);
-});
 
-app.get("/urls/:id", (req, res) => {
-  
-  const id = req.params.id;
 
-  if (!urlDatabase.hasOwnProperty(id)) {
-    res.send("This shortened URL ID is not in the database");
-  }
-  //login if not logged in
-  if (!req.session.user_id) {
-    return res.redirect("/login");
-  }
-  //cannot edit if not owner
-  if (req.session.user_id !== urlDatabase[id].userId) {
-    return res.send("You do not have permission to edit this entry");
-  }
 
-  const templateVars = {user: users[req.session.user_id], id: req.params.id, longURL: urlDatabase[req.params.id].longURL  };
-  res.render("urls_show", templateVars);
-});
+
+
+
+
+
+
 
 
 ///////////////
