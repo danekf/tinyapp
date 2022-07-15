@@ -103,42 +103,10 @@ app.use(
 /////////////////
 //Routes
 /////////////////
+//main redirect if nothing specified
 app.get("/", (req, res) => {
   //redirect user if they just try to open localhost/port  
  res.redirect("/urls")
-});
-
-app.get("/urls", (req, res) => {
-  
-  //if not logged in, redirect to login
-  if (!req.session.userId) {
-    return res.redirect("/login");
-  }
-  
-  const usersURLs = urlsForUser(req.session.userId);
-  
-  const templateVars = {user: users[req.session.userId], urls: usersURLs };
-  
-  res.render("urls_index", templateVars);
-});
-
-app.post("/urls", (req, res) => {
-  //login check for creating shorter urls
-  if (!req.session.userId) {
-    return res.send("Please Log in to see shortened URLS");
-  }
-    
-  let id = generateRandomString();
-  urlDatabase[id] = {
-    longURL: '',
-    userId: ''
-  };
-    
-  urlDatabase[id].longURL = req.body.longURL;
-  urlDatabase[id].userId = req.session.userId;
-    
-  res.redirect(`/urls/${id}`);
-    
 });
   
 //register new user
@@ -150,7 +118,6 @@ app.get("/register", (req, res) => {
   const templateVars = {user: users[req.session.userId]};
   res.render("urls_register", templateVars);
 });
-
 app.post("/register", (req, res) => {
   const newEmail = req.body.email;
   const newPassword = req.body.password;
@@ -182,9 +149,81 @@ app.post("/register", (req, res) => {
   res.redirect(`/urls`);
 });
 
-//link to longURL
-app.get("/u/:id", (req, res) => {
-  res.redirect(urlDatabase[req.params.id]);
+//log in
+app.get("/login", (req, res) => {
+  //if logged in, redirect to URLS
+  if (req.session.userId) {
+    return res.redirect("/urls");
+  }
+  const templateVars = {user: users[req.session.userId], urls: urlDatabase };
+  res.render("urls_login", templateVars);
+});
+app.post("/login", (req, res) => {
+  //set sername and password from login page
+  const {email , password} = req.body;
+  //check username and password combo, if not found, send to error
+      
+  const {Err, user} = userLoginCheck(email, password);
+  
+  if (Err) {
+    return res.send(Err);
+  }
+  req.session.userId = user.id;
+  res.redirect("/urls");
+  
+});
+
+//logout for user
+app.post("/logout", (req, res) => {
+  //clear cookie
+  req.session.userId = null;
+  res.redirect("/urls");
+});
+
+
+//MY URLS page
+app.get("/urls", (req, res) => {
+  
+  //if not logged in, redirect to login
+  if (!req.session.userId) {
+    return res.redirect("/login");
+  }
+  
+  const usersURLs = urlsForUser(req.session.userId);
+  
+  const templateVars = {user: users[req.session.userId], urls: usersURLs };
+  
+  res.render("urls_index", templateVars);
+});
+app.post("/urls", (req, res) => {
+  //login check for creating shorter urls
+  if (!req.session.userId) {
+    return res.send("Please Log in to see shortened URLS");
+  }
+    
+  let id = generateRandomString();
+  urlDatabase[id] = {
+    longURL: '',
+    userId: ''
+  };
+    
+  urlDatabase[id].longURL = req.body.longURL;
+  urlDatabase[id].userId = req.session.userId;
+    
+  res.redirect(`/urls/${id}`);
+    
+});
+
+//Create new URL
+app.get("/urls/new", (req, res) => {
+    
+  //if not logged in, redirect to login
+  if (!req.session.userId) {
+    return res.redirect("/login");
+  }
+  
+  const templateVars = {user: users[req.session.userId]};
+  res.render("urls_new", templateVars);
 });
 
 //Edit URL for existing id
@@ -194,7 +233,6 @@ app.post("/urls/:id", (req, res) => {
   urlDatabase[id].longURL = req.body.longURL;
   res.redirect('/urls');
 });
-
 app.get("/urls/:id", (req, res) => {
   
   const id = req.params.id;
@@ -215,8 +253,7 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-
-//detele on urls_index
+//detele created shortened URL
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
   
@@ -225,47 +262,10 @@ app.post("/urls/:id/delete", (req, res) => {
   
 });
 
-//log in
-app.get("/login", (req, res) => {
-  //if logged in, redirect to URLS
-  if (req.session.userId) {
-    return res.redirect("/urls");
-  }
-  const templateVars = {user: users[req.session.userId], urls: urlDatabase };
-  res.render("urls_login", templateVars);
-});
-app.post("/login", (req, res) => {
-  //set sername and password from login page
-  const {email , password} = req.body;
-  //check username and password combo, if not found, send to error
-  
-  
-  const {Err, user} = userLoginCheck(email, password);
-  
-  if (Err) {
-    return res.send(Err);
-  }
-  req.session.userId = user.id;
-  res.redirect("/urls");
-  
-});
 
-//logout for user
-app.post("/logout", (req, res) => {
-  //clear cookie
-  req.session.userIdd = null;
-  res.redirect("/urls");
-});
-
-app.get("/urls/new", (req, res) => {
-  
-  //if not logged in, redirect to login
-  if (!req.session.userId) {
-    return res.redirect("/login");
-  }
-  
-  const templateVars = {user: users[req.session.userId]};
-  res.render("urls_new", templateVars);
+//link to longURL
+app.get("/u/:id", (req, res) => {
+  res.redirect(urlDatabase[req.params.id]);
 });
 
 
