@@ -208,11 +208,6 @@ app.post("/logout", (req, res) => {
 //Routes
 /////////////////
 
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-
 app.get("/login", (req, res) => {
   //if logged in, redirect to URLS
   if (req.session.user_id) {
