@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const PORT = 8080; // default port 8080
+const PORT = 3000; // default port 8080
 app.set("view engine", "ejs"); // set template enmjine as ejs
 const cookieParser = require('cookie-parser'); //require cookie parser for cookies
 const cookieSession = require('cookie-session');//require cookie session for secure cookies
@@ -168,7 +168,7 @@ app.post("/login", (req, res) => {
 //logout for user
 app.post("/logout", (req, res) => {
   //clear cookie
-  req.session.userId = null;
+  req.session = null;
   res.redirect("/urls");
 });
 
