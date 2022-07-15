@@ -6,7 +6,7 @@ const cookieParser = require('cookie-parser'); //require cookie parser for cooki
 const cookieSession = require('cookie-session');//require cookie session for secure cookies
 //bcrypt stuff
 const bcrypt = require("bcryptjs");
-let salt = bcrypt.genSaltSync(10);
+const salt = bcrypt.genSaltSync(10);
 
 /////////////////////
 //Global Objects
@@ -57,7 +57,7 @@ const {getUserByValue, generateRandomString} = require('./helpers.js');
 
 
 const userLoginCheck = (typedEmail, password) => {
-  let usersObj = users;
+  const usersObj = users;
   
   const user = getUserByValue(typedEmail, "email", usersObj);
 
@@ -75,7 +75,7 @@ const userLoginCheck = (typedEmail, password) => {
 //return object with user owned URLS
 
 const urlsForUser = (id) => {
-  let ownedURLS = {};
+  const ownedURLS = {};
   for (let shortURL in urlDatabase) {
     if (urlDatabase[shortURL].userId === id) {
       ownedURLS[shortURL] = urlDatabase[shortURL];
@@ -129,10 +129,10 @@ app.post("/urls", (req, res) => {
   
 //register new user
 app.post("/register", (req, res) => {
-  let newEmail = req.body.email;
-  let newPassword = req.body.password;
-  let encryptedPassword = bcrypt.hashSync(newPassword, salt);
-  let newId = generateRandomString();
+  const newEmail = req.body.email;
+  const newPassword = req.body.password;
+  const encryptedPassword = bcrypt.hashSync(newPassword, salt);
+  const newId = generateRandomString();
     
   if (newEmail === '' || newPassword === '') {
     res.send("HTTP Error 400, blank email or password");
@@ -161,7 +161,7 @@ app.post("/register", (req, res) => {
 
 //Edit URL for existing id
 app.post("/urls/:id", (req, res) => {
-  let id = req.params.id;
+  const id = req.params.id;
   
   urlDatabase[id].longURL = req.body.longURL;
   res.redirect('/urls');
@@ -169,7 +169,7 @@ app.post("/urls/:id", (req, res) => {
 
 //detele button on urls_index
 app.post("/urls/:id/delete", (req, res) => {
-  let id = req.params.id;
+  const id = req.params.id;
   
   delete urlDatabase[id];
   res.redirect(`/urls`); //send us to the URL index page again
@@ -235,7 +235,7 @@ app.get("/urls", (req, res) => {
     return res.redirect("/login");
   }
   
-  let usersURLs = urlsForUser(req.session.user_id);
+  const usersURLs = urlsForUser(req.session.user_id);
   
   const templateVars = {user: users[req.session.user_id], urls: usersURLs };
   
@@ -269,7 +269,7 @@ app.get("/u/:id", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
   
-  let id = req.params.id;
+  const id = req.params.id;
 
   if (!urlDatabase.hasOwnProperty(id)) {
     res.send("This shortened URL ID is not in the database");
