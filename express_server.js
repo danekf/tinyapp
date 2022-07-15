@@ -99,53 +99,43 @@ app.use(
     name: "session",
     keys: ["A happy little grapefruit", "Friends stay friends forever"],
     
-    // Cookie Options
-    // maxAge: 24 * 60 * 60 * 1000, // 24 hours
+
   })
-  );
+);
   
+/////////////////
+//Posts
+/////////////////
   
-  //////
-  const morgan = require('morgan');
-  const e = require("express");
-  //app.use(morgan('dev'));
-  
-  
-  
-  
-  /////////////////
-  //Posts
-  /////////////////
-  
-  //create new short URL with link, then redirect to home
-  app.post("/urls", (req, res) => {
-    //login check for creating shorter urls
-    if (!req.session.user_id) {
-      return res.send("Please Log in to see shortened URLS");
-    }
+//create new short URL with link, then redirect to home
+app.post("/urls", (req, res) => {
+  //login check for creating shorter urls
+  if (!req.session.user_id) {
+    return res.send("Please Log in to see shortened URLS");
+  }
     
-    let id = generateRandomString();
-    urlDatabase[id] = {
-      longURL: '',
-      userId: ''
-    };
+  let id = generateRandomString();
+  urlDatabase[id] = {
+    longURL: '',
+    userId: ''
+  };
     
-    urlDatabase[id].longURL = req.body.longURL;
-    urlDatabase[id].userId = req.session.user_id;
+  urlDatabase[id].longURL = req.body.longURL;
+  urlDatabase[id].userId = req.session.user_id;
     
-    res.redirect(`/urls/${id}`);
+  res.redirect(`/urls/${id}`);
     
-  });
+});
   
-  //register new user
-  app.post("/register", (req, res) => {
-    let newEmail = req.body.email;
-    let newPassword = req.body.password;
-    let encryptedPassword = bcrypt.hashSync(newPassword, salt);
-    let newId = generateRandomString();
+//register new user
+app.post("/register", (req, res) => {
+  let newEmail = req.body.email;
+  let newPassword = req.body.password;
+  let encryptedPassword = bcrypt.hashSync(newPassword, salt);
+  let newId = generateRandomString();
     
-    if (newEmail === '' || newPassword === '') {
-      res.send("HTTP Error 400, blank email or password");
+  if (newEmail === '' || newPassword === '') {
+    res.send("HTTP Error 400, blank email or password");
   }
   
   //if email is already registered, send to error message, else do nothing.
@@ -165,7 +155,7 @@ app.use(
   users[newId].password = encryptedPassword;
   
   //set cookie with new user_id
-  req.session.user_id = newId;
+  req.session.userId = newId;
   res.redirect(`/urls`);
 });
 
@@ -198,7 +188,7 @@ app.post("/login", (req, res) => {
   if (Err) {
     return res.send(Err);
   }
-  req.session.user_id = user.id;
+  req.session.userId = user.id;
   res.redirect("/urls");
   
 });
@@ -207,7 +197,7 @@ app.post("/login", (req, res) => {
 //logout for user
 app.post("/logout", (req, res) => {
   //clear cookie
-  req.session.user_id = null;
+  req.session.userIdd = null;
   res.redirect("/urls");
 });
 
